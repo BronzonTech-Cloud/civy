@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useResumeStore } from "@/stores/useResumeStore";
+import { ModernTemplate } from "@/components/preview/templates/ModernTemplate";
 import { DownloadIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
 
 export function PreviewPanel() {
@@ -30,52 +31,11 @@ export function PreviewPanel() {
 
       <ScrollArea className="flex-1">
         <div className="flex items-start justify-center p-6">
-          {/* PDF Preview Container - A4 aspect ratio placeholder */}
           <div
-            className="w-full max-w-[595px] bg-white shadow-lg rounded-sm border"
+            className="w-full max-w-[595px] bg-white shadow-lg rounded-sm border overflow-hidden"
             style={{ aspectRatio: "1 / 1.414" }}
           >
-            {/* Resume Preview Content */}
-            <div className="p-8 space-y-4">
-              <div className="text-center space-y-1">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {resume.personal.fullName}
-                </h1>
-                {resume.personal.jobTitle && (
-                  <p className="text-gray-600">{resume.personal.jobTitle}</p>
-                )}
-                <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500">
-                  {resume.personal.details
-                    .filter((d) => d.visible)
-                    .map((detail) => (
-                      <span key={detail.id}>
-                        {String(detail.value)}
-                      </span>
-                    ))}
-                </div>
-              </div>
-
-              {resume.sections
-                .filter((s) => s.visible)
-                .map((section) => (
-                  <div key={section.id} className="space-y-2">
-                    <h2 className="text-lg font-semibold text-gray-800 border-b pb-1">
-                      {section.title}
-                    </h2>
-                    <div className="space-y-1">
-                      {section.content.items
-                        .filter((item) => item.visible)
-                        .map((item) => (
-                          <div key={item.id} className="text-sm text-gray-700">
-                            {typeof item.value === "string"
-                              ? item.value
-                              : JSON.stringify(item.value)}
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                ))}
-            </div>
+            <ModernTemplate resume={resume} />
           </div>
         </div>
       </ScrollArea>

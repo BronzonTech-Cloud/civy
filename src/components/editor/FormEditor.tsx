@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useResumeStore } from "@/stores/useResumeStore";
+import { PersonalInfoForm } from "@/components/editor/PersonalInfoForm";
 import { PlusIcon } from "lucide-react";
 
 export function FormEditor() {
@@ -24,22 +25,7 @@ export function FormEditor() {
 
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-4">
-          {/* Personal Information Section */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">{t("personal")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-sm text-muted-foreground">
-                {resume.personal.fullName}
-              </div>
-              {resume.personal.details.map((item) => (
-                <div key={item.id} className="text-sm text-muted-foreground">
-                  {item.type}: {String(item.value)}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <PersonalInfoForm />
 
           <Separator />
 
