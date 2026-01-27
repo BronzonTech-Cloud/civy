@@ -2,11 +2,11 @@
 
 import { useTranslations } from "next-intl";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useResumeStore } from "@/stores/useResumeStore";
 import { PersonalInfoForm } from "@/components/editor/forms/PersonalInfoForm";
+import { SectionManager } from "@/components/editor/SectionManager";
 import { PlusIcon } from "lucide-react";
 
 export function FormEditor() {
@@ -30,36 +30,7 @@ export function FormEditor() {
           <Separator />
 
           {/* Dynamic Sections */}
-          {resume.sections.map((section) => (
-            <Card key={section.id}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">{section.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {section.content.items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">
-                    {t("addSection")}
-                  </p>
-                ) : (
-                  section.content.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="text-sm p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                    >
-                      <span className="text-xs text-muted-foreground uppercase">
-                        {item.type}
-                      </span>
-                      <div>
-                        {typeof item.value === "string"
-                          ? item.value
-                          : JSON.stringify(item.value)}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          ))}
+<SectionManager />
         </div>
       </ScrollArea>
     </div>
