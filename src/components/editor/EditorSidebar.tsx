@@ -23,6 +23,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   UserIcon,
   SettingsIcon,
@@ -33,14 +35,9 @@ import {
   WrenchIcon,
   TextIcon,
   PlusIcon,
+  TrashIcon,
 } from "lucide-react";
-
-const NAV_SECTIONS = [
-  { key: "experience", icon: BriefcaseIcon },
-  { key: "education", icon: GraduationCapIcon },
-  { key: "skills", icon: WrenchIcon },
-  { key: "summary", icon: TextIcon },
-] as const;
+import { useResumeStore, SECTION_TEMPLATES } from "@/stores/useResumeStore";
 
 export function EditorSidebar() {
   const t = useTranslations("editor.sidebar");
@@ -97,26 +94,47 @@ export function EditorSidebar() {
 
           <SidebarSeparator />
 
-          <SidebarGroup>
+<SidebarGroup>
             <SidebarGroupLabel>{t("sections")}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
-                {NAV_SECTIONS.map(({ key, icon: Icon }) => (
-                  <SidebarMenuItem key={key}>
-                    <SidebarMenuButton tooltip={isCollapsed ? tForm(key) : undefined}>
-                      <Icon />
-                      <span>{tForm(key)}</span>
+              {/* Add Section Buttons */}
+              {!isCollapsed && (
+                <div className="space-y-1">
+                  {Object.entries(SECTION_TEMPLATES).map(([key, template]) => {
+                    const iconMap = {
+                      experience: BriefcaseIcon,
+                      education: GraduationCapIcon,
+                      skills: WrenchIcon,
+                      summary: TextIcon,
+                      custom: PlusIcon,
+                    };
+                    const Icon = iconMap[key as keyof typeof iconMap];
+                    return (
+                      <Button
+                        key={key}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => useResumeStore.getState().addSection(key)}
+                        className="justify-start w-full"
+                      >
+                        <Icon className="size-4 mr-2" />
+                        {template.title}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Collapsed Add Button */}
+              {isCollapsed && (
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton tooltip={tForm("addSection")}>
+                      <PlusIcon />
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ))}
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton tooltip={isCollapsed ? tForm("addSection") : undefined}>
-                    <PlusIcon />
-                    <span>{tForm("addSection")}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
+                </SidebarMenu>
+              )}
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
