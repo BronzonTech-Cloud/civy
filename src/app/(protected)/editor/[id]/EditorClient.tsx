@@ -17,6 +17,8 @@ type EditorClientProps = {
     id: string;
     title: string;
     data: Record<string, unknown>;
+    is_public: boolean;
+    slug: string | null;
   };
 };
 
@@ -35,7 +37,7 @@ export function EditorClient({ resumeId, initialData }: EditorClientProps) {
       id: initialData.id,
       userId: "",
       title: initialData.title,
-      isPublic: false,
+      isPublic: initialData.is_public,
       metadata: resumeData.metadata ?? {
         template: "modern",
         typography: { fontFamily: "inter", fontSize: "md" },
@@ -60,7 +62,11 @@ export function EditorClient({ resumeId, initialData }: EditorClientProps) {
           <SidebarInset className="flex-1 overflow-hidden">
             <Group orientation="horizontal" style={{ height: "100%" }}>
               <Panel id="form-editor" defaultSize="50%" minSize="30%" maxSize="70%">
-                <FormEditor />
+                <FormEditor 
+                  resumeId={resumeId}
+                  initialIsPublic={initialData.is_public}
+                  initialSlug={initialData.slug}
+                />
               </Panel>
 
               <Separator
