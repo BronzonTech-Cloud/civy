@@ -114,6 +114,8 @@ export type ResumeData = {
   id: string;
   title: string;
   data: Record<string, unknown>;
+  is_public: boolean;
+  slug: string | null;
 };
 
 export async function getResume(id: string): Promise<ResumeData | null> {
@@ -129,7 +131,7 @@ export async function getResume(id: string): Promise<ResumeData | null> {
 
   const { data, error } = await supabase
     .from("resumes")
-    .select("id, title, data")
+    .select("id, title, data, is_public, slug")
     .eq("id", id)
     .eq("user_id", user.id)
     .is("deleted_at", null)
@@ -170,3 +172,127 @@ export async function saveResume(
 
   return {};
 }
+
+// ============================================
+// PUBLIC SHARING ACTIONS
+// ============================================
+
+export type PublicResumeData = {
+  id: string;
+  title: string;
+  data: Record<string, unknown>;
+};
+
+/**
+ * Get a public resume by its share slug.
+ * No authentication required - but resume must be public.
+ */
+export async function getPublicResume(slug: string): Promise<PublicResumeData | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("resumes")
+    .select("id, title, data")
+    .eq("slug", slug)
+    .eq("is_public", true)
+    .is("deleted_at", null)
+    .single();
+
+  if (error) {
+    // Not found or not public
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Generate a unique 8-character slug
+ */
+function generateSlug(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let slug = '';
+  for (let i = 0; i < 8; i++) {
+    slug += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return slug;
+}
+
+/**
+ * Toggle resume visibility (public/private).
+ * If making public and no slug exists, generate one.
+ */
+export async function toggleResumeVisibility(
+  id: string
+): Promise<{ isPublic: boolean; slug: string | null; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { isPublic: false, slug: null, error: "Not authenticated" };
+  }
+
+  // Get current state
+  const { data: current, error: fetchError } = await supabase
+    .from("resumes")
+    .select("is_public, slug")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (fetchError || !current) {
+    return { isPublic: false, slug: null, error: "Resume not found" };
+  }
+
+  const newIsPublic = !current.is_public;
+  const slug = newIsPublic && !current.slug ? generateSlug() : current.slug;
+
+  const { error: updateError } = await supabase
+    .from("resumes")
+    .update({ is_public: newIsPublic, slug })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (updateError) {
+    return { isPublic: current.is_public, slug: current.slug, error: updateError.message };
+  }
+
+  revalidatePath("/dashboard");
+  return { isPublic: newIsPublic, slug };
+}
+
+/**
+ * Regenerate share slug (invalidates old public link).
+ */
+export async function regenerateSlug(
+  id: string
+): Promise<{ slug: string | null; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { slug: null, error: "Not authenticated" };
+  }
+
+  const newSlug = generateSlug();
+
+  const { error } = await supabase
+    .from("resumes")
+    .update({ slug: newSlug })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { slug: null, error: error.message };
+  }
+
+  revalidatePath("/dashboard");
+  return { slug: newSlug };
+}
+

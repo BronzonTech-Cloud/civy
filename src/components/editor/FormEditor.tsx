@@ -10,10 +10,17 @@ import { Input } from "@/components/ui/input";
 import { useResumeStore } from "@/stores/useResumeStore";
 import { PersonalInfoForm } from "@/components/editor/forms/PersonalInfoForm";
 import { SectionManager } from "@/components/editor/SectionManager";
+import { ShareModal } from "@/components/editor/ShareModal";
 import { useSave } from "@/contexts/SaveContext";
 import { PlusIcon, ArrowLeftIcon, SaveIcon, PencilIcon } from "lucide-react";
 
-export function FormEditor() {
+type FormEditorProps = {
+  resumeId: string;
+  initialIsPublic: boolean;
+  initialSlug: string | null;
+};
+
+export function FormEditor({ resumeId, initialIsPublic, initialSlug }: FormEditorProps) {
   const t = useTranslations("editor.formEditor");
   const { resume, addSection } = useResumeStore();
   const updateTitle = useResumeStore((state) => state.setResume);
@@ -79,6 +86,11 @@ export function FormEditor() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <ShareModal 
+            resumeId={resumeId}
+            initialIsPublic={initialIsPublic}
+            initialSlug={initialSlug}
+          />
           <Button size="sm" variant="outline" onClick={saveNow}>
             <SaveIcon className="size-4" />
             <span>Save</span>
