@@ -70,6 +70,46 @@
     "delete": "حذف",
     "confirmDelete": "هل أنت متأكد أنك تريد حذف هذه السيرة الذاتية؟",
     "untitled": "سيرة ذاتية بدون عنوان",
-    "deleting": "جار الحذف..."
+    "deleting": "جار الحذف...",
+    "limitReached": "تم الوصول للحد الأقصى",
+    "upgradeTitle": "افتح عدد غير محدود من السير الذاتية",
+    "upgradeDescription": "قم بالترقية إلى Pro لإنشاء سير ذاتية غير محدودة والوصول إلى القوالب المميزة.",
+    "upgradeButton": "الترقية إلى Pro"
+  },
+  "share": {
+    "title": "مشاركة",
+    "makePublic": "جعل السيرة الذاتية عامة",
+    "publicDescription": "يمكن لأي شخص لديه الرابط عرض سيرتك الذاتية",
+    "privateDescription": "أنت فقط من يمكنه رؤية هذه السيرة الذاتية",
+    "shareLink": "مشاركة الرابط",
+    "copyLink": "نسخ الرابط",
+    "copied": "تم النسخ!",
+    "regenerate": "إنشاء رابط جديد",
+    "regenerateWarning": "هذا سيجعل الرابط القديم غير صالح",
+    "nowPublic": "السيرة الذاتية عامة الآن",
+    "nowPrivate": "السيرة الذاتية خاصة الآن",
+    "linkRegenerated": "تم إنشاء رابط جديد",
+    "close": "إغلاق"
+  },
+  "premium": {
+    "title": "الترقية إلى Pro",
+    "subtitle": "افتح جميع الميزات",
+    "monthly": "شهري",
+    "quarterly": "3 أشهر",
+    "yearly": "سنوي",
+    "monthlyPrice": "$3.99",
+    "quarterlyPrice": "$9.99",
+    "yearlyPrice": "$29.99",
+    "perMonth": "/شهر",
+    "billed": "يتم فوترته {cycle}",
+    "features": {
+      "resumes": "سير ذاتية غير محدودة",
+      "templates": "جميع القوالب المميزة",
+      "history": "تاريخ إصدارات السيرة الذاتية",
+      "support": "دعم ذو أولوية"
+    },
+    "subscribe": "اشترك",
+    "currentPlan": "الخطة الحالية",
+    "freePlan": "الخطة المجانية"
   }
 }

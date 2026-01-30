@@ -70,7 +70,11 @@
     "delete": "Delete",
     "confirmDelete": "Are you sure you want to delete this resume?",
     "untitled": "Untitled Resume",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "limitReached": "Limit Reached",
+    "upgradeTitle": "Unlock Unlimited Resumes",
+    "upgradeDescription": "Upgrade to Pro to create unlimited resumes and access premium templates.",
+    "upgradeButton": "Upgrade to Pro"
   },
   "share": {
     "title": "Share",
@@ -86,5 +90,26 @@
     "nowPrivate": "Resume is now private",
     "linkRegenerated": "Link regenerated",
     "close": "Close"
+  },
+  "premium": {
+    "title": "Upgrade to Pro",
+    "subtitle": "Unlock all features",
+    "monthly": "Monthly",
+    "quarterly": "3 Months",
+    "yearly": "Yearly",
+    "monthlyPrice": "$3.99",
+    "quarterlyPrice": "$9.99",
+    "yearlyPrice": "$29.99",
+    "perMonth": "/month",
+    "billed": "Billed {cycle}",
+    "features": {
+      "resumes": "Unlimited resumes",
+      "templates": "All premium templates",
+      "history": "Resume version history",
+      "support": "Priority support"
+    },
+    "subscribe": "Subscribe",
+    "currentPlan": "Current Plan",
+    "freePlan": "Free Plan"
   }
 }

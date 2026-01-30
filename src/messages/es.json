@@ -70,6 +70,46 @@
     "delete": "Eliminar",
     "confirmDelete": "¿Estás seguro de que quieres eliminar este currículum?",
     "untitled": "Currículum sin título",
-    "deleting": "Eliminando..."
+    "deleting": "Eliminando...",
+    "limitReached": "Límite alcanzado",
+    "upgradeTitle": "Desbloquea currículums ilimitados",
+    "upgradeDescription": "Pásate a Pro para crear currículums ilimitados y acceder a plantillas premium.",
+    "upgradeButton": "Pasarse a Pro"
+  },
+  "share": {
+    "title": "Compartir",
+    "makePublic": "Hacer currículum público",
+    "publicDescription": "Cualquiera con el enlace puede ver tu currículum",
+    "privateDescription": "Solo tú puedes ver este currículum",
+    "shareLink": "Compartir enlace",
+    "copyLink": "Copiar enlace",
+    "copied": "¡Copiado!",
+    "regenerate": "Generar nuevo enlace",
+    "regenerateWarning": "Esto invalidará el enlace anterior",
+    "nowPublic": "El currículum es ahora público",
+    "nowPrivate": "El currículum es ahora privado",
+    "linkRegenerated": "Enlace regenerado",
+    "close": "Cerrar"
+  },
+  "premium": {
+    "title": "Pasarse a Pro",
+    "subtitle": "Desbloquea todas las funciones",
+    "monthly": "Mensual",
+    "quarterly": "3 Meses",
+    "yearly": "Anual",
+    "monthlyPrice": "$3.99",
+    "quarterlyPrice": "$9.99",
+    "yearlyPrice": "$29.99",
+    "perMonth": "/mes",
+    "billed": "Facturado {cycle}",
+    "features": {
+      "resumes": "Currículums ilimitados",
+      "templates": "Todas las plantillas premium",
+      "history": "Historial de versiones",
+      "support": "Soporte prioritario"
+    },
+    "subscribe": "Suscribirse",
+    "currentPlan": "Plan Actual",
+    "freePlan": "Plan Gratuito"
   }
 }

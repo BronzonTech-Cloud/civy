@@ -55,6 +55,9 @@ export async function getResumes(): Promise<ResumeListItem[]> {
   return data ?? [];
 }
 
+import { RESUME_LIMITS } from "@/constants/limits";
+import { getProfile } from "@/lib/profile/actions";
+
 export async function createResume(): Promise<void> {
   const supabase = await createClient();
 
@@ -64,6 +67,24 @@ export async function createResume(): Promise<void> {
 
   if (!user) {
     redirect("/login");
+  }
+
+  // Server-side limit check
+  const [countResult, profile] = await Promise.all([
+    supabase
+      .from("resumes")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .is("deleted_at", null),
+    getProfile(),
+  ]);
+
+  const resumeCount = countResult.count ?? 0;
+  const isPremium = profile?.is_premium ?? false;
+  const maxResumes = isPremium ? RESUME_LIMITS.PRO_MAX_RESUMES : RESUME_LIMITS.FREE_MAX_RESUMES;
+
+  if (resumeCount >= maxResumes) {
+    throw new Error("Resume limit reached. Please upgrade to Pro.");
   }
 
   const { data, error } = await supabase

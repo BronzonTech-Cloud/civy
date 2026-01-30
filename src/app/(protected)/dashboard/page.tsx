@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Lock } from "lucide-react";
 import { getResumes, createResume } from "@/lib/resumes/actions";
 import { getUser } from "@/lib/auth/actions";
+import { getProfile } from "@/lib/profile/actions";
 import { Button } from "@/components/ui/button";
 import { ResumeCard } from "./ResumeCard";
+import { RESUME_LIMITS } from "@/constants/limits";
+import { UpgradePrompt } from "./UpgradePrompt";
 
 export default async function DashboardPage() {
   const user = await getUser();
@@ -14,7 +17,14 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const resumes = await getResumes();
+  const [resumes, profile] = await Promise.all([
+    getResumes(),
+    getProfile(),
+  ]);
+
+  const isPremium = profile?.is_premium ?? false;
+  const maxResumes = isPremium ? RESUME_LIMITS.PRO_MAX_RESUMES : RESUME_LIMITS.FREE_MAX_RESUMES;
+  const isAtLimit = resumes.length >= maxResumes;
 
   return (
     <div className="min-h-dvh bg-background">
@@ -23,9 +33,9 @@ export default async function DashboardPage() {
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <form action={createResume}>
-            <Button type="submit">
-              <Plus className="size-4" />
-              {t("createNew")}
+            <Button type="submit" disabled={isAtLimit}>
+              {isAtLimit ? <Lock className="size-4" /> : <Plus className="size-4" />}
+              {isAtLimit ? t("limitReached") : t("createNew")}
             </Button>
           </form>
         </div>
@@ -54,6 +64,9 @@ export default async function DashboardPage() {
             ))}
           </div>
         )}
+
+        {/* Upgrade Prompt */}
+        {isAtLimit && !isPremium && <UpgradePrompt />}
       </div>
     </div>
   );
