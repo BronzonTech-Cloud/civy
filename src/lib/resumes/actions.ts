@@ -181,10 +181,20 @@ export async function getResume(id: string): Promise<ResumeData | null> {
   return data;
 }
 
+import { saveResumeUpdatesSchema } from "./resume-schema";
+
 export async function saveResume(
   id: string,
   updates: { title?: string; data?: Record<string, unknown> }
 ): Promise<{ error?: string }> {
+  // Server-side validation
+  const parsed = saveResumeUpdatesSchema.safeParse(updates);
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
+    console.warn("saveResume validation failed:", parsed.error.issues);
+    return { error: firstError };
+  }
+
   const supabase = await createClient();
 
   const {
@@ -197,7 +207,7 @@ export async function saveResume(
 
   const { error } = await supabase
     .from("resumes")
-    .update(updates)
+    .update(parsed.data)
     .eq("id", id)
     .eq("user_id", user.id);
 
