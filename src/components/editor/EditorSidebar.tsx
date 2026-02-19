@@ -47,7 +47,7 @@ export function EditorSidebar() {
   const isCollapsed = state === "collapsed";
   const sectionCount = useResumeStore((state) => state.resume.sections.length);
   const atSectionLimit = sectionCount >= RESUME_LIMITS.MAX_SECTIONS;
-  const user = useUser();
+  const { user } = useUser();
 
   return (
     <TooltipProvider>

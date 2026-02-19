@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { FileText, Pencil, Trash2 } from "lucide-react";
@@ -13,6 +14,7 @@ import {
   CardAction,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toastManager } from "@/components/ui/toast";
 import { deleteResume, type ResumeListItem } from "@/lib/resumes/actions";
 
 function formatRelativeTime(dateString: string): string {
@@ -42,6 +44,7 @@ type ResumeCardProps = {
 
 export function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
   const t = useTranslations("dashboard");
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -53,8 +56,19 @@ export function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
 
     startTransition(async () => {
       const result = await deleteResume(resume.id);
-      if (!result.error) {
+      if (result.error) {
+        toastManager.add({
+          type: "error",
+          title: t("deleteError") || "Error",
+          description: result.error,
+        });
+      } else {
+        toastManager.add({
+          type: "success",
+          title: t("deleteSuccess") || "Resume deleted",
+        });
         onDeleted?.();
+        router.refresh(); // Force refresh to update server components
       }
       setShowConfirm(false);
     });

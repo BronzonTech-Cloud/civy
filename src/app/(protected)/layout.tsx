@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth/actions";
+import { getProfile } from "@/lib/profile/actions";
 import { UserProvider } from "@/contexts/UserContext";
 
 export default async function ProtectedLayout({
@@ -13,5 +14,11 @@ export default async function ProtectedLayout({
     redirect("/login");
   }
 
-  return <UserProvider user={user}>{children}</UserProvider>;
+  const profile = await getProfile();
+
+  return (
+    <UserProvider user={user} profile={profile}>
+      {children}
+    </UserProvider>
+  );
 }
