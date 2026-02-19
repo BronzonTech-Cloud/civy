@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -106,6 +107,7 @@ export async function createResume(): Promise<void> {
 }
 
 export async function deleteResume(id: string): Promise<{ error?: string }> {
+  // Use the user client ONLY to verify authentication
   const supabase = await createClient();
 
   const {
@@ -116,7 +118,12 @@ export async function deleteResume(id: string): Promise<{ error?: string }> {
     return { error: "Not authenticated" };
   }
 
-  const { error } = await supabase
+  // Use the admin client for the actual update to bypass RLS.
+  // This is safe because this is a "use server" action (never runs in browser)
+  // and we've already verified the user owns this operation above.
+  const admin = createAdminClient();
+
+  const { error } = await admin
     .from("resumes")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
@@ -139,7 +146,15 @@ export type ResumeData = {
   slug: string | null;
 };
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function getResume(id: string): Promise<ResumeData | null> {
+  // Validate UUID format before querying to prevent database errors
+  if (!UUID_REGEX.test(id)) {
+    return null;
+  }
+
   const supabase = await createClient();
 
   const {

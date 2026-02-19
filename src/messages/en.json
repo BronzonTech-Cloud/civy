@@ -74,7 +74,9 @@
     "limitReached": "Limit Reached",
     "upgradeTitle": "Unlock Unlimited Resumes",
     "upgradeDescription": "Upgrade to Pro to create unlimited resumes and access premium templates.",
-    "upgradeButton": "Upgrade to Pro"
+    "upgradeButton": "Upgrade to Pro",
+    "deleteError": "Could not delete resume",
+    "deleteSuccess": "Resume deleted successfully"
   },
   "share": {
     "title": "Share",

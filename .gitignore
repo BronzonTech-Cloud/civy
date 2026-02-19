@@ -35,8 +35,12 @@ yarn-error.log*
 
 # vercel
 .vercel
-/.agent/
+
+# skills
+AGENT.md
+/.agents/
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+

@@ -74,7 +74,9 @@
     "limitReached": "Límite alcanzado",
     "upgradeTitle": "Desbloquea currículums ilimitados",
     "upgradeDescription": "Pásate a Pro para crear currículums ilimitados y acceder a plantillas premium.",
-    "upgradeButton": "Pasarse a Pro"
+    "upgradeButton": "Pasarse a Pro",
+    "deleteError": "No se pudo eliminar el currículum",
+    "deleteSuccess": "Currículum eliminado con éxito"
   },
   "share": {
     "title": "Compartir",
