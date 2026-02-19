@@ -37,10 +37,13 @@ yarn-error.log*
 .vercel
 
 # skills
-AGENT.md
+AGENTS.md
 /.agents/
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# roadmaps and audits
+ROADMAP.md
 

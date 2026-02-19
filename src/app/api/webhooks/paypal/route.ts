@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updatePremiumStatus, cancelPremium } from "@/lib/profile/actions";
+import { verifyWebhookSignature } from "@/lib/paypal";
 
 // PayPal Webhook Event Types
 type PayPalEvent = {
@@ -32,13 +33,18 @@ type PayPalEvent = {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body: PayPalEvent = await request.json();
-    
-    // TODO: Verify webhook signature in production
-    // const webhookId = process.env.PAYPAL_WEBHOOK_ID;
-    // const verified = await verifyPayPalWebhook(request, webhookId);
-    
-    console.log("PayPal webhook received:", body.event_type);
+    // Read raw body for signature verification
+    const rawBody = await request.text();
+
+    // Verify webhook signature against PayPal's API
+    const isValid = await verifyWebhookSignature(request.headers, rawBody);
+    if (!isValid) {
+      console.warn("PayPal webhook signature verification FAILED");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    const body: PayPalEvent = JSON.parse(rawBody);
+    console.log("PayPal webhook verified:", body.event_type);
 
     const subscriptionId = body.resource.id;
     const customId = body.resource.custom_id; // This should be the user ID
