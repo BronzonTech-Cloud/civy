@@ -604,3 +604,39 @@ export async function restoreVersion(
   trackEvent("restore_version", resumeId, { historyId }).catch(() => {});
   return {};
 }
+
+/**
+ * Bulk soft-delete multiple resumes at once.
+ */
+export async function bulkDeleteResumes(
+  ids: string[]
+): Promise<{ error?: string; count?: number }> {
+  if (!ids.length || ids.length > 50) {
+    return { error: "Invalid selection" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const { data, error } = await supabase
+    .from("resumes")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .in("id", ids)
+    .select("id");
+
+  if (error) {
+    console.error("Bulk delete failed:", error.message);
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard");
+  return { count: data?.length ?? 0 };
+}
