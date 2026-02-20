@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, User, Shield, CreditCard, AlertTriangle } from "lucide-react";
+import { ArrowLeft, User, Shield, CreditCard, AlertTriangle, Mail, Download } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { toastManager } from "@/components/ui/toast";
 import { useUser } from "@/contexts/UserContext";
-import { updatePassword } from "@/lib/auth/actions";
+import { updatePassword, deleteAccount, changeEmail } from "@/lib/auth/actions";
 import { updateDisplayName, cancelSubscription } from "@/lib/profile/actions";
 
 export default function SettingsPage() {
@@ -42,6 +42,26 @@ export default function SettingsPage() {
       } else {
         toastManager.add({ type: "success", title: t("savedSuccess") });
         router.refresh();
+      }
+    });
+  };
+
+  // --- Email Change Section ---
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPending, startEmailTransition] = useTransition();
+
+  const handleChangeEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    startEmailTransition(async () => {
+      const result = await changeEmail(newEmail);
+      if (result.error) {
+        toastManager.add({ type: "error", title: result.error });
+      } else {
+        toastManager.add({
+          type: "success",
+          title: t("emailChangeConfirmation"),
+        });
+        setNewEmail("");
       }
     });
   };
@@ -86,6 +106,53 @@ export default function SettingsPage() {
         router.refresh();
       }
     });
+  };
+
+  // --- Danger Zone ---
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePending, startDeleteTransition] = useTransition();
+
+  const handleDeleteAccount = () => {
+    if (deleteConfirmText !== "DELETE") return;
+    startDeleteTransition(async () => {
+      const result = await deleteAccount();
+      if (result?.error) {
+        toastManager.add({ type: "error", title: result.error });
+      }
+      // On success, deleteAccount redirects to /login
+    });
+  };
+
+  // --- Data Export ---
+  const [exportPending, setExportPending] = useState(false);
+
+  const handleExportData = async () => {
+    setExportPending(true);
+    try {
+      const res = await fetch("/api/export");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Export failed");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `civy-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toastManager.add({ type: "success", title: t("exportSuccess") });
+    } catch (err) {
+      toastManager.add({
+        type: "error",
+        title: err instanceof Error ? err.message : "Export failed",
+      });
+    } finally {
+      setExportPending(false);
+    }
   };
 
   const formatDate = (dateString: string | null) => {
@@ -148,6 +215,125 @@ export default function SettingsPage() {
                 </Button>
               </CardFooter>
             </form>
+          </Card>
+
+          {/* Email Change Section */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Mail className="size-5 text-muted-foreground" />
+                <CardTitle>{t("changeEmail")}</CardTitle>
+              </div>
+              <CardDescription>{t("changeEmailDescription")}</CardDescription>
+            </CardHeader>
+            <form onSubmit={handleChangeEmail}>
+              <CardContent>
+                <Field>
+                  <FieldLabel>{t("newEmail")}</FieldLabel>
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder={t("newEmailPlaceholder")}
+                    required
+                  />
+                </Field>
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" disabled={emailPending || !newEmail.trim()}>
+                  {emailPending ? t("saving") : t("updateEmail")}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+
+          {/* Preferences Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("preferences")}</CardTitle>
+              <CardDescription>{t("preferencesDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Language Selector */}
+              <div className="space-y-3">
+                <FieldLabel>{t("language")}</FieldLabel>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant={profile?.locale === "en" ? "default" : "outline"}
+                    onClick={async () => {
+                      document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000`;
+                      await import("@/lib/profile/actions").then((m) =>
+                        m.updatePreferences({ locale: "en" })
+                      );
+                      window.location.reload();
+                    }}
+                  >
+                    {t("english")} {profile?.locale === "en" && "✓"}
+                  </Button>
+                  <Button
+                    variant={profile?.locale === "es" ? "default" : "outline"}
+                    onClick={async () => {
+                      document.cookie = `NEXT_LOCALE=es; path=/; max-age=31536000`;
+                      await import("@/lib/profile/actions").then((m) =>
+                        m.updatePreferences({ locale: "es" })
+                      );
+                      window.location.reload();
+                    }}
+                  >
+                    {t("spanish")} {profile?.locale === "es" && "✓"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Theme Selector */}
+              <div className="space-y-3">
+                <FieldLabel>{t("theme")}</FieldLabel>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant={profile?.theme === "light" ? "default" : "outline"}
+                    onClick={async () => {
+                      document.cookie = `NEXT_THEME=light; path=/; max-age=31536000`;
+                      await import("@/lib/profile/actions").then((m) =>
+                        m.updatePreferences({ theme: "light" })
+                      );
+                      // ThemeProvider handles class update, but a reload ensures everything syncs cleanly
+                      window.location.reload();
+                    }}
+                  >
+                    {t("light")} {profile?.theme === "light" && "✓"}
+                  </Button>
+                  <Button
+                    variant={profile?.theme === "dark" ? "default" : "outline"}
+                    onClick={async () => {
+                      document.cookie = `NEXT_THEME=dark; path=/; max-age=31536000`;
+                      await import("@/lib/profile/actions").then((m) =>
+                        m.updatePreferences({ theme: "dark" })
+                      );
+                      window.location.reload();
+                    }}
+                  >
+                    {t("dark")} {profile?.theme === "dark" && "✓"}
+                  </Button>
+                  <Button
+                    variant={
+                      profile?.theme === "system" || !profile?.theme
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={async () => {
+                      document.cookie = `NEXT_THEME=system; path=/; max-age=31536000`;
+                      await import("@/lib/profile/actions").then((m) =>
+                        m.updatePreferences({ theme: "system" })
+                      );
+                      window.location.reload();
+                    }}
+                  >
+                    {t("systemTheme")}{" "}
+                    {(profile?.theme === "system" || !profile?.theme) && "✓"}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
           </Card>
 
           {/* Security Section, only for email/password users */}
@@ -256,6 +442,26 @@ export default function SettingsPage() {
             </CardFooter>
           </Card>
 
+          {/* Data Export */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Download className="size-5 text-muted-foreground" />
+                <CardTitle>{t("exportData")}</CardTitle>
+              </div>
+              <CardDescription>{t("exportDataDescription")}</CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <Button
+                variant="outline"
+                onClick={handleExportData}
+                disabled={exportPending}
+              >
+                {exportPending ? t("exporting") : t("downloadData")}
+              </Button>
+            </CardFooter>
+          </Card>
+
           {/* Danger Zone */}
           <Card className="border-destructive/30">
             <CardHeader>
@@ -263,11 +469,51 @@ export default function SettingsPage() {
                 <AlertTriangle className="size-5 text-destructive" />
                 <CardTitle className="text-destructive">{t("dangerZone")}</CardTitle>
               </div>
+              <CardDescription>{t("deleteAccountWarning")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {t("deleteAccountPlaceholder")}
-              </p>
+              {showDeleteConfirm ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-destructive font-medium">
+                    {t("deleteAccountConfirmMessage")}
+                  </p>
+                  <Field>
+                    <FieldLabel>{t("typeDeleteToConfirm")}</FieldLabel>
+                    <Input
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="DELETE"
+                      className="max-w-48"
+                    />
+                  </Field>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteAccount}
+                      disabled={deletePending || deleteConfirmText !== "DELETE"}
+                    >
+                      {deletePending ? t("deleting") : t("permanentlyDelete")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setDeleteConfirmText("");
+                      }}
+                      disabled={deletePending}
+                    >
+                      {tCommon("cancel")}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  {t("deleteAccount")}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

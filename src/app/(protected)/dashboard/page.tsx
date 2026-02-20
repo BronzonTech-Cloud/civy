@@ -7,7 +7,7 @@ import { getUser } from "@/lib/auth/actions";
 import { getProfile } from "@/lib/profile/actions";
 import { getAllResumeViewCounts } from "@/lib/analytics/actions";
 import { Button } from "@/components/ui/button";
-import { ResumeCard } from "./ResumeCard";
+import { ResumeGrid } from "./ResumeGrid";
 import { RESUME_LIMITS } from "@/constants/limits";
 import { UpgradePrompt } from "./UpgradePrompt";
 
@@ -87,11 +87,7 @@ export default async function DashboardPage() {
           </div>
         ) : (
           // Resume Grid
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {resumes.map((resume) => (
-              <ResumeCard key={resume.id} resume={resume} viewCount={viewCounts[resume.id] ?? 0} />
-            ))}
-          </div>
+          <ResumeGrid resumes={resumes} viewCounts={viewCounts} />
         )}
 
         {/* Upgrade Prompt */}
