@@ -17,7 +17,17 @@
       "versionHistory": "Version History",
       "user": "User Profile",
       "collapse": "Collapse sidebar",
-      "expand": "Expand sidebar"
+      "expand": "Expand sidebar",
+      "savedTemplates": "Saved Templates",
+      "saveCurrentAppearance": "Save Current Appearance",
+      "templateName": "Template Name",
+      "save": "Save",
+      "deleteTemplate": "Delete",
+      "apply": "Apply",
+      "appearanceDesc": "Customize the appearance of your resume.",
+      "limitFree": "Free users can only save 2 templates. Upgrade to Pro for unlimited templates.",
+      "limitPro": "You have reached the maximum limit of 50 custom templates.",
+      "saveError": "Failed to save template. Please try again."
     },
     "formEditor": {
       "title": "Form Editor",
@@ -115,7 +125,15 @@
     "deselectAll": "Deselect All",
     "deleteSelected": "Delete ({count})",
     "cancelSelection": "Cancel",
-    "bulkDeleteSuccess": "{count} resume(s) deleted"
+    "bulkDeleteSuccess": "{count} resume(s) deleted",
+    "searchPlaceholder": "Search resumes...",
+    "sortBy": "Sort by:",
+    "sortLastEdited": "Last edited",
+    "sortOldest": "Oldest first",
+    "sortTitleAsc": "Title (A-Z)",
+    "sortTitleDesc": "Title (Z-A)",
+    "noSearchResults": "No resumes found",
+    "noSearchResultsDesc": "Try adjusting your search query."
   },
   "share": {
     "title": "Share",

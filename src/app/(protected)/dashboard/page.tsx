@@ -7,9 +7,11 @@ import { getUser } from "@/lib/auth/actions";
 import { getProfile } from "@/lib/profile/actions";
 import { getAllResumeViewCounts } from "@/lib/analytics/actions";
 import { Button } from "@/components/ui/button";
-import { ResumeGrid } from "./ResumeGrid";
 import { RESUME_LIMITS } from "@/constants/limits";
 import { UpgradePrompt } from "./UpgradePrompt";
+import { UserNav } from "@/components/UserNav";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { ResumeDashboardClient } from "./ResumeDashboardClient";
 
 export default async function DashboardPage() {
   const user = await getUser();
@@ -60,34 +62,38 @@ export default async function DashboardPage() {
             >
               <Settings className="size-4" />
             </Button>
+            <LanguageToggle />
             <form action={createResume}>
               <Button type="submit" disabled={isAtLimit}>
                 {isAtLimit ? <Lock className="size-4" /> : <Plus className="size-4" />}
                 {isAtLimit ? t("limitReached") : t("createNew")}
               </Button>
             </form>
+            <div className="ml-2">
+              <UserNav />
+            </div>
           </div>
         </div>
 
         {/* Content */}
         {resumes.length === 0 ? (
           // Empty State
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-muted/30 py-16">
-            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
-              <FileText className="size-8 text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed bg-muted/10 py-24 px-6 text-center">
+            <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-primary/10">
+              <FileText className="size-10 text-primary/80" />
             </div>
-            <h2 className="text-lg font-semibold">{t("empty")}</h2>
-            <p className="mb-6 text-muted-foreground">{t("emptyDescription")}</p>
+            <h2 className="mb-2 text-2xl font-bold tracking-tight">{t("empty")}</h2>
+            <p className="mb-8 max-w-sm text-muted-foreground">{t("emptyDescription")}</p>
             <form action={createResume}>
-              <Button type="submit">
-                <Plus className="size-4" />
+              <Button type="submit" size="lg" className="rounded-full px-8 shadow-sm">
+                <Plus className="mr-2 size-5" />
                 {t("createNew")}
               </Button>
             </form>
           </div>
         ) : (
-          // Resume Grid
-          <ResumeGrid resumes={resumes} viewCounts={viewCounts} />
+          // Client Wrapper for Search, Sort, and Grid
+          <ResumeDashboardClient resumes={resumes} viewCounts={viewCounts} />
         )}
 
         {/* Upgrade Prompt */}

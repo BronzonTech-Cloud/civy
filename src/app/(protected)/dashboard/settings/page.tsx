@@ -255,7 +255,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Language Selector */}
-              <div className="space-y-3">
+              <Field className="space-y-3">
                 <FieldLabel>{t("language")}</FieldLabel>
                 <div className="flex flex-wrap gap-3">
                   <Button
@@ -283,10 +283,10 @@ export default function SettingsPage() {
                     {t("spanish")} {profile?.locale === "es" && "✓"}
                   </Button>
                 </div>
-              </div>
+              </Field>
 
               {/* Theme Selector */}
-              <div className="space-y-3">
+              <Field className="space-y-3">
                 <FieldLabel>{t("theme")}</FieldLabel>
                 <div className="flex flex-wrap gap-3">
                   <Button
@@ -296,7 +296,7 @@ export default function SettingsPage() {
                       await import("@/lib/profile/actions").then((m) =>
                         m.updatePreferences({ theme: "light" })
                       );
-                      // ThemeProvider handles class update, but a reload ensures everything syncs cleanly
+                      // ThemeProvider handles class update, but a reload to everything sync cleanly
                       window.location.reload();
                     }}
                   >
@@ -332,7 +332,7 @@ export default function SettingsPage() {
                     {(profile?.theme === "system" || !profile?.theme) && "✓"}
                   </Button>
                 </div>
-              </div>
+              </Field>
             </CardContent>
           </Card>
 
