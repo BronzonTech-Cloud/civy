@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { ResumeGrid } from "./ResumeGrid";
 import { RESUME_LIMITS } from "@/constants/limits";
 import { UpgradePrompt } from "./UpgradePrompt";
+import { UserNav } from "@/components/UserNav";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export default async function DashboardPage() {
   const user = await getUser();
@@ -60,12 +62,16 @@ export default async function DashboardPage() {
             >
               <Settings className="size-4" />
             </Button>
+            <LanguageToggle />
             <form action={createResume}>
               <Button type="submit" disabled={isAtLimit}>
                 {isAtLimit ? <Lock className="size-4" /> : <Plus className="size-4" />}
                 {isAtLimit ? t("limitReached") : t("createNew")}
               </Button>
             </form>
+            <div className="ml-2">
+              <UserNav />
+            </div>
           </div>
         </div>
 

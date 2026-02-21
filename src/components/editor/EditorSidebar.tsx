@@ -18,7 +18,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   LayoutTemplateIcon,
@@ -36,11 +35,8 @@ import { RESUME_LIMITS } from "@/constants/limits";
 import { useUser } from "@/contexts/UserContext";
 import { VersionHistory } from "@/components/editor/VersionHistory";
 import { ResumeSettingsDialog } from "@/components/editor/ResumeSettingsDialog";
-
-function getInitials(email: string): string {
-  const name = email.split("@")[0];
-  return name.slice(0, 2).toUpperCase();
-}
+import { UserNav } from "@/components/UserNav";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export function EditorSidebar() {
   const t = useTranslations("editor.sidebar");
@@ -58,19 +54,18 @@ export function EditorSidebar() {
         <SidebarHeader className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" isActive={false}>
-                <Avatar className="size-8">
-                  <div className="flex size-full items-center justify-center bg-primary text-primary-foreground text-sm font-medium">
-                    {user?.email ? getInitials(user.email) : "??"}
-                  </div>
-                </Avatar>
-                <div className="flex flex-col gap-0.5 leading-none overflow-hidden">
-                  <span className="font-semibold">{t("user")}</span>
-                  <span className="text-xs text-muted-foreground truncate max-w-32">
-                    {user?.email ?? "Unknown"}
-                  </span>
+              <div className="flex items-center justify-between px-2 py-1">
+                <div className="flex items-center gap-2">
+                  <UserNav />
+                  {!isCollapsed && (
+                     <div className="flex flex-col gap-0.5 leading-none overflow-hidden text-sm">
+                       <span className="font-semibold truncate max-w-32">{t("user")}</span>
+                       <span className="text-xs text-muted-foreground truncate max-w-32">{user?.user_metadata?.display_name || user?.email || "Unknown"}</span>
+                     </div>
+                  )}
                 </div>
-              </SidebarMenuButton>
+                {!isCollapsed && <LanguageToggle />}
+              </div>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
