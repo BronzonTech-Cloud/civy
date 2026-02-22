@@ -90,7 +90,17 @@
     "folderNamePlaceholder": "उदा. डिज़ाइन, तकनीकी, ड्राफ्ट",
     "create": "बनाएं",
     "creating": "बनाया जा रहा है...",
-    "folderCreated": "फ़ोल्डर बनाया गया"
+    "folderCreated": "फ़ोल्डर बनाया गया",
+    "selectResumes": "चुनना",
+    "selectAll": "सभी का चयन करें",
+    "deselectAll": "सभी का चयन रद्द करें",
+    "deleteSelected": "{count} चयनित हटाएं",
+    "itemsSelected": "चयनित",
+    "bulkDuplicate": "डुप्लिकेट",
+    "bulkDelete": "हटाएं",
+    "bulkDeleteSuccess": "{count} आइटम हटा दिए गए",
+    "bulkDuplicateSuccess": "{count} आइटम डुप्लिकेट किए गए",
+    "cancelSelection": "रद्द करें"
   },
   "share": {
     "title": "साझा करें",

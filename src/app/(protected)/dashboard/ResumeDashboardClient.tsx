@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Search, LayoutGrid, List as ListIcon, FolderClosed, Folder as FolderIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Search, LayoutGrid, List as ListIcon, FolderClosed, Folder as FolderIcon, MoreVertical, Pencil, Trash2, CheckSquare, X } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/menu";
 import {
@@ -20,6 +20,7 @@ import { ResumeList } from "./ResumeList";
 import { CreateFolderDialog } from "./CreateFolderDialog";
 import { EditFolderDialog } from "./EditFolderDialog";
 import { DeleteFolderDialog } from "./DeleteFolderDialog";
+import { SelectionActionBar } from "./SelectionActionBar";
 import type { ResumeListItem } from "@/lib/resumes/actions";
 import type { Folder } from "@/lib/folders/actions";
 
@@ -43,6 +44,18 @@ export function ResumeDashboardClient({
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
   const [deletingFolder, setDeletingFolder] = useState<Folder | null>(null);
+
+  // Selection State
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedResumes, setSelectedResumes] = useState<Set<string>>(new Set());
+
+  // Clear selection on folder change
+  const [prevFolder, setPrevFolder] = useState<string>(selectedFolder);
+  if (selectedFolder !== prevFolder) {
+    setPrevFolder(selectedFolder);
+    setIsSelectionMode(false);
+    setSelectedResumes(new Set());
+  }
 
   const sortOptionsMap: Record<SortOption, string> = {
     updated_desc: t("sortLastEdited"),
@@ -180,6 +193,27 @@ export function ResumeDashboardClient({
                 <ListIcon className="size-4" />
               </ToggleGroupItem>
             </ToggleGroup>
+
+            <Separator orientation="vertical" className="h-6 hidden sm:block" />
+
+            {/* Selection Toggle */}
+            <Button
+              variant={isSelectionMode ? "secondary" : "outline"}
+              size="icon"
+              onClick={() => {
+                if (isSelectionMode) {
+                  setIsSelectionMode(false);
+                  setSelectedResumes(new Set());
+                } else {
+                  setIsSelectionMode(true);
+                }
+              }}
+              aria-label={isSelectionMode ? t("cancelSelection") : t("selectResumes")}
+              title={isSelectionMode ? t("cancelSelection") : t("selectResumes")}
+            >
+              {isSelectionMode ? <X className="size-4" /> : <CheckSquare className="size-4" />}
+            </Button>
+
             <Separator orientation="vertical" className="h-6" />
             <InputGroup className="w-full sm:w-64">
               <InputGroupAddon>
@@ -228,11 +262,32 @@ export function ResumeDashboardClient({
             </p>
           </div>
         ) : view === "grid" ? (
-          <ResumeGrid resumes={filteredAndSortedResumes} viewCounts={viewCounts} folders={folders} />
+          <ResumeGrid 
+            resumes={filteredAndSortedResumes} 
+            viewCounts={viewCounts} 
+            folders={folders} 
+            isSelectionMode={isSelectionMode}
+            selectedResumes={selectedResumes}
+            setSelectedResumes={setSelectedResumes}
+          />
         ) : (
-          <ResumeList resumes={filteredAndSortedResumes} viewCounts={viewCounts} folders={folders} />
+          <ResumeList 
+            resumes={filteredAndSortedResumes} 
+            viewCounts={viewCounts} 
+            folders={folders}
+            isSelectionMode={isSelectionMode}
+            selectedResumes={selectedResumes}
+            setSelectedResumes={setSelectedResumes}
+          />
         )}
       </div>
+
+      <SelectionActionBar 
+        selectedResumes={selectedResumes}
+        setSelectedResumes={setSelectedResumes}
+        setIsSelectionMode={setIsSelectionMode}
+        resumes={filteredAndSortedResumes}
+      />
     </div>
   );
 }

@@ -90,7 +90,17 @@
     "folderNamePlaceholder": "مثل: التصميم، التقنية، المسودات",
     "create": "إنشاء",
     "creating": "جارٍ الإنشاء...",
-    "folderCreated": "تم إنشاء المجلد"
+    "folderCreated": "تم إنشاء المجلد",
+    "deleteSelected": "حذف {count} المحددة",
+    "selectResumes": "تحديد",
+    "itemsSelected": "محدد",
+    "deselectAll": "إلغاء تحديد الكل",
+    "selectAll": "تحديد الكل",
+    "bulkDuplicate": "تكرار",
+    "bulkDelete": "حذف",
+    "bulkDeleteSuccess": "تم حذف {count} عنصر",
+    "bulkDuplicateSuccess": "تم تكرار {count} عنصر",
+    "cancelSelection": "إلغاء"
   },
   "share": {
     "title": "مشاركة",

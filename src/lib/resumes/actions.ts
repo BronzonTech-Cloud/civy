@@ -608,6 +608,80 @@ export async function restoreVersion(
 }
 
 /**
+ * Bulk duplicate multiple resumes at once. Uses deep copy and appending "Copy of"
+ * to titles. Returns the number of copies created without redirecting.
+ */
+export async function bulkDuplicateResumes(
+  ids: string[]
+): Promise<{ error?: string; count?: number }> {
+  if (!ids.length || ids.length > 50) {
+    return { error: "Invalid selection" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  // Check limits first
+  const [countResult, profile] = await Promise.all([
+    supabase
+      .from("resumes")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .is("deleted_at", null),
+    getProfile(),
+  ]);
+
+  const resumeCount = countResult.count ?? 0;
+  const isPremium = profile?.is_premium ?? false;
+  const maxResumes = isPremium
+    ? RESUME_LIMITS.PRO_MAX_RESUMES
+    : RESUME_LIMITS.FREE_MAX_RESUMES;
+
+  if (resumeCount + ids.length > maxResumes) {
+    return { error: `Resume limit reached. Cannot create ${ids.length} copies.` };
+  }
+
+  // Fetch all source resumes
+  const { data: sources, error: fetchError } = await supabase
+    .from("resumes")
+    .select("title, data, folder_id")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .in("id", ids);
+
+  if (fetchError || !sources) {
+    return { error: "Failed to fetch source resumes" };
+  }
+
+  // Pre-process copies
+  const newResumes = sources.map((source) => ({
+    user_id: user.id,
+    title: `Copy of ${source.title}`,
+    folder_id: source.folder_id,
+    data: JSON.parse(JSON.stringify(source.data)),
+  }));
+
+  const { data, error: insertError } = await supabase
+    .from("resumes")
+    .insert(newResumes)
+    .select("id");
+
+  if (insertError) {
+    console.error("Bulk duplicate failed:", insertError.message);
+    return { error: insertError.message };
+  }
+
+  revalidatePath("/dashboard");
+  return { count: data?.length ?? 0 };
+}
+
+/**
  * Bulk soft-delete multiple resumes at once.
  */
 export async function bulkDeleteResumes(

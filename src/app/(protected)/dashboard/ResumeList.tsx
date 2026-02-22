@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckSquare, Trash2, X, FileText, Copy, Pencil, MoreVertical, Folder as FolderIcon, EyeIcon } from "lucide-react";
+import { Trash2, FileText, Copy, Pencil, MoreVertical, Folder as FolderIcon, EyeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toastManager } from "@/components/ui/toast";
-import { bulkDeleteResumes, deleteResume, duplicateResume, assignResumeToFolder, type ResumeListItem } from "@/lib/resumes/actions";
+import { deleteResume, duplicateResume, assignResumeToFolder, type ResumeListItem } from "@/lib/resumes/actions";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,6 +26,9 @@ type ResumeListProps = {
   resumes: ResumeListItem[];
   viewCounts: Record<string, number>;
   folders: Folder[];
+  isSelectionMode: boolean;
+  selectedResumes: Set<string>;
+  setSelectedResumes: (selected: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
 };
 
 function formatRelativeTime(dateString: string): string {
@@ -48,11 +51,16 @@ function formatRelativeTime(dateString: string): string {
   }
 }
 
-export function ResumeList({ resumes, viewCounts, folders }: ResumeListProps) {
+export function ResumeList({ 
+  resumes, 
+  viewCounts, 
+  folders,
+  isSelectionMode,
+  selectedResumes,
+  setSelectedResumes
+}: ResumeListProps) {
   const t = useTranslations("dashboard");
   const router = useRouter();
-  const [selecting, setSelecting] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
 
   const handleAssignFolder = (id: string, folderId: string | null) => {
@@ -67,7 +75,7 @@ export function ResumeList({ resumes, viewCounts, folders }: ResumeListProps) {
   };
 
   const toggleSelect = (id: string) => {
-    setSelected((prev) => {
+    setSelectedResumes((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -75,36 +83,6 @@ export function ResumeList({ resumes, viewCounts, folders }: ResumeListProps) {
         next.add(id);
       }
       return next;
-    });
-  };
-
-  const selectAll = () => {
-    if (selected.size === resumes.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(resumes.map((r) => r.id)));
-    }
-  };
-
-  const exitSelecting = () => {
-    setSelecting(false);
-    setSelected(new Set());
-  };
-
-  const handleBulkDelete = () => {
-    if (selected.size === 0) return;
-    startTransition(async () => {
-      const result = await bulkDeleteResumes(Array.from(selected));
-      if (result.error) {
-        toastManager.add({ type: "error", title: result.error });
-      } else {
-        toastManager.add({
-          type: "success",
-          title: t("bulkDeleteSuccess", { count: result.count ?? 0 }),
-        });
-        exitSelecting();
-        router.refresh();
-      }
     });
   };
 
@@ -135,37 +113,6 @@ export function ResumeList({ resumes, viewCounts, folders }: ResumeListProps) {
 
   return (
     <div>
-      {/* Selection toolbar */}
-      <div className="mb-4 flex items-center gap-2">
-        {selecting ? (
-          <>
-            <Button size="sm" variant="outline" onClick={selectAll}>
-              <CheckSquare className="size-4" />
-              {selected.size === resumes.length ? t("deselectAll") : t("selectAll")}
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={handleBulkDelete}
-              disabled={selected.size === 0 || isPending}
-            >
-              <Trash2 className="size-4" />
-              {isPending ? t("deleting") : t("deleteSelected", { count: selected.size })}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={exitSelecting}>
-              <X className="size-4" />
-              {t("cancelSelection")}
-            </Button>
-          </>
-        ) : (
-          resumes.length > 1 && (
-            <Button size="sm" variant="ghost" onClick={() => setSelecting(true)}>
-              <CheckSquare className="size-4" />
-              {t("selectResumes")}
-            </Button>
-          )
-        )}
-      </div>
 
       {/* List Container */}
       <div className="flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
@@ -174,19 +121,19 @@ export function ResumeList({ resumes, viewCounts, folders }: ResumeListProps) {
             key={resume.id}
             className={`group relative flex items-center gap-4 p-4 transition-colors hover:bg-muted/50 ${
               index !== resumes.length - 1 ? "border-b" : ""
-            } ${selecting && selected.has(resume.id) ? "bg-primary/5 hover:bg-primary/10" : ""}`}
-            onClick={selecting ? () => toggleSelect(resume.id) : undefined}
+            } ${isSelectionMode && selectedResumes.has(resume.id) ? "bg-primary/5 hover:bg-primary/10" : ""}`}
+            onClick={isSelectionMode ? () => toggleSelect(resume.id) : undefined}
           >
             {/* Selection Checkbox Area */}
-            {selecting && (
+            {isSelectionMode && (
               <div
                 className={`flex size-5 shrink-0 items-center justify-center rounded border-2 transition-colors cursor-pointer ${
-                  selected.has(resume.id)
+                  selectedResumes.has(resume.id)
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-muted-foreground/40 bg-background"
                 }`}
               >
-                {selected.has(resume.id) && (
+                {selectedResumes.has(resume.id) && (
                   <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
@@ -203,8 +150,8 @@ export function ResumeList({ resumes, viewCounts, folders }: ResumeListProps) {
             <div className="flex min-w-0 flex-1 flex-col">
               <div className="flex items-center gap-2">
                 <Link
-                  href={`/editor/${resume.id}`}
-                  className={`truncate text-base font-semibold hover:underline outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1 -ml-1 ${selecting ? "pointer-events-none" : ""}`}
+                  href={isSelectionMode ? "#" : `/editor/${resume.id}`}
+                  className={`truncate text-base font-semibold hover:underline outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1 -ml-1 ${isSelectionMode ? "pointer-events-none" : ""}`}
                 >
                   {resume.title || t("untitled")}
                 </Link>
@@ -227,7 +174,7 @@ export function ResumeList({ resumes, viewCounts, folders }: ResumeListProps) {
 
             {/* Actions */}
             <div className="flex shrink-0 items-center gap-2">
-              {!selecting && (
+              {!isSelectionMode && (
                 <>
                   <Button size="icon-sm" variant="ghost" className="hidden sm:inline-flex" onClick={() => router.push(`/editor/${resume.id}`)}>
                     <Pencil className="size-4" />

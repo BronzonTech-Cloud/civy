@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { RESUME_LIMITS } from "@/constants/limits";
+import { getProfile } from "@/lib/profile/actions";
 
 export type Folder = {
   id: string;
@@ -45,6 +47,23 @@ export async function createFolder(name: string, color: string | null = null): P
 
   if (!user) {
     return { error: "Not authenticated" };
+  }
+
+  // Server-side limit check
+  const [countResult, profile] = await Promise.all([
+    supabase
+      .from("folders")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    getProfile(),
+  ]);
+
+  const folderCount = countResult.count ?? 0;
+  const isPremium = profile?.is_premium ?? false;
+  const maxFolders = isPremium ? RESUME_LIMITS.PRO_MAX_FOLDERS : RESUME_LIMITS.FREE_MAX_FOLDERS;
+
+  if (folderCount >= maxFolders) {
+    return { error: `Folder limit reached. Maximum ${maxFolders} allowed for your plan.` };
   }
 
   const { data, error } = await supabase
