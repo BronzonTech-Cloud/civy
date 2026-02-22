@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrashIcon, TypeIcon, CalendarIcon, LinkIcon, StarIcon } from "lucide-react";
+import { TrashIcon, TypeIcon, CalendarIcon, LinkIcon, StarIcon, EyeIcon, EyeOffIcon, CopyIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SectionEditorProps {
@@ -27,31 +27,79 @@ interface ItemEditorProps {
   item: Item;
   onUpdate: (data: Partial<Item>) => void;
   onRemove: (e: React.MouseEvent) => void;
+  onDuplicate: (e: React.MouseEvent) => void;
+  onToggleVisibility: (e: React.MouseEvent) => void;
 }
 
-function ItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
+function ItemEditor({ item, onUpdate, onRemove, onDuplicate, onToggleVisibility }: ItemEditorProps) {
   if (isStringItem(item)) {
-    return <StringItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} />;
+    return <StringItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} onDuplicate={onDuplicate} onToggleVisibility={onToggleVisibility} />;
   }
   if (isDateRangeItem(item)) {
-    return <DateRangeItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} />;
+    return <DateRangeItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} onDuplicate={onDuplicate} onToggleVisibility={onToggleVisibility} />;
   }
   if (isLinkItem(item)) {
-    return <LinkItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} />;
+    return <LinkItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} onDuplicate={onDuplicate} onToggleVisibility={onToggleVisibility} />;
   }
   if (isRatingItem(item)) {
-    return <RatingItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} />;
+    return <RatingItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} onDuplicate={onDuplicate} onToggleVisibility={onToggleVisibility} />;
   }
   if (isImageItem(item)) {
-    return <ImageItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} />;
+    return <ImageItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} onDuplicate={onDuplicate} onToggleVisibility={onToggleVisibility} />;
   }
   if (isSeparatorItem(item)) {
-    return <SeparatorItemEditor onRemove={onRemove} />;
+    return <SeparatorItemEditor item={item} onUpdate={onUpdate} onRemove={onRemove} onDuplicate={onDuplicate} onToggleVisibility={onToggleVisibility} />;
   }
   return null;
 }
 
-function StringItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
+function ItemActions({ 
+  visible, 
+  onRemove, 
+  onDuplicate, 
+  onToggleVisibility,
+  className 
+}: { 
+  visible?: boolean; 
+  onRemove: (e: React.MouseEvent) => void; 
+  onDuplicate: (e: React.MouseEvent) => void; 
+  onToggleVisibility: (e: React.MouseEvent) => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-center gap-1", className)}>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onToggleVisibility}
+        className="text-muted-foreground hover:text-primary"
+        title={visible === false ? "Show on PDF" : "Hide from PDF"}
+      >
+        {visible === false ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onDuplicate}
+        className="text-muted-foreground hover:text-primary"
+        title="Duplicate"
+      >
+        <CopyIcon className="size-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onRemove}
+        className="text-muted-foreground hover:text-destructive"
+        title="Remove"
+      >
+        <TrashIcon className="size-4" />
+      </Button>
+    </div>
+  );
+}
+
+function StringItemEditor({ item, onUpdate, onRemove, onDuplicate, onToggleVisibility }: ItemEditorProps) {
   if (!isStringItem(item)) return null;
 
   const isTextarea = item.type === 'text' || item.type === 'bullet';
@@ -61,7 +109,10 @@ function StringItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   const isNearLimit = charCount >= maxChars * 0.9;
 
   return (
-    <div className="flex items-start gap-2 p-3 rounded-lg border bg-card item-container">
+    <div className={cn(
+      "flex items-start gap-2 p-3 rounded-lg border bg-card item-container transition-opacity",
+      item.visible === false && "opacity-50"
+    )}>
       <div className="flex-1 space-y-1">
         {isTextarea ? (
           <Textarea
@@ -88,19 +139,18 @@ function StringItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
           {charCount.toLocaleString()} / {maxChars.toLocaleString()}
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={onRemove}
-        className="text-muted-foreground hover:text-destructive flex-shrink-0"
-      >
-        <TrashIcon className="size-4" />
-      </Button>
+      <ItemActions 
+        visible={item.visible} 
+        onRemove={onRemove} 
+        onDuplicate={onDuplicate} 
+        onToggleVisibility={onToggleVisibility} 
+        className="flex-shrink-0"
+      />
     </div>
   );
 }
 
-function DateRangeItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
+function DateRangeItemEditor({ item, onUpdate, onRemove, onDuplicate, onToggleVisibility }: ItemEditorProps) {
   if (!isDateRangeItem(item)) return null;
 
   const handleStartDateChange = (startDate: string) => {
@@ -116,17 +166,18 @@ function DateRangeItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   };
 
   return (
-    <div className="space-y-3 p-3 rounded-lg border bg-card item-container">
+    <div className={cn(
+      "space-y-3 p-3 rounded-lg border bg-card item-container transition-opacity",
+      item.visible === false && "opacity-50"
+    )}>
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">Date Range</Label>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onRemove}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <TrashIcon className="size-4" />
-        </Button>
+        <ItemActions 
+          visible={item.visible} 
+          onRemove={onRemove} 
+          onDuplicate={onDuplicate} 
+          onToggleVisibility={onToggleVisibility} 
+        />
       </div>
       
       <div className="grid grid-cols-2 gap-3">
@@ -169,7 +220,7 @@ function DateRangeItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   );
 }
 
-function LinkItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
+function LinkItemEditor({ item, onUpdate, onRemove, onDuplicate, onToggleVisibility }: ItemEditorProps) {
   if (!isLinkItem(item)) return null;
 
   const handleLabelChange = (label: string) => {
@@ -181,19 +232,20 @@ function LinkItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   };
 
   return (
-    <div className="space-y-3 p-3 rounded-lg border bg-card item-container">
+    <div className={cn(
+      "space-y-3 p-3 rounded-lg border bg-card item-container transition-opacity",
+      item.visible === false && "opacity-50"
+    )}>
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">
           {item.type === 'social' ? 'Social Link' : 'Link'}
         </Label>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onRemove}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <TrashIcon className="size-4" />
-        </Button>
+        <ItemActions 
+          visible={item.visible} 
+          onRemove={onRemove} 
+          onDuplicate={onDuplicate} 
+          onToggleVisibility={onToggleVisibility} 
+        />
       </div>
       
       <div className="space-y-2">
@@ -214,7 +266,7 @@ function LinkItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   );
 }
 
-function RatingItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
+function RatingItemEditor({ item, onUpdate, onRemove, onDuplicate, onToggleVisibility }: ItemEditorProps) {
   if (!isRatingItem(item)) return null;
 
   const handleLabelChange = (label: string) => {
@@ -234,17 +286,18 @@ function RatingItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   };
 
   return (
-    <div className="space-y-3 p-3 rounded-lg border bg-card item-container">
+    <div className={cn(
+      "space-y-3 p-3 rounded-lg border bg-card item-container transition-opacity",
+      item.visible === false && "opacity-50"
+    )}>
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">Skill Rating</Label>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onRemove}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <TrashIcon className="size-4" />
-        </Button>
+        <ItemActions 
+          visible={item.visible} 
+          onRemove={onRemove} 
+          onDuplicate={onDuplicate} 
+          onToggleVisibility={onToggleVisibility} 
+        />
       </div>
       
       <div className="grid grid-cols-2 gap-3">
@@ -304,7 +357,7 @@ function RatingItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   );
 }
 
-function ImageItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
+function ImageItemEditor({ item, onUpdate, onRemove, onDuplicate, onToggleVisibility }: ItemEditorProps) {
   if (!isImageItem(item)) return null;
 
   const handleUrlChange = (url: string) => {
@@ -320,17 +373,18 @@ function ImageItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   };
 
   return (
-    <div className="space-y-3 p-3 rounded-lg border bg-card item-container">
+    <div className={cn(
+      "space-y-3 p-3 rounded-lg border bg-card item-container transition-opacity",
+      item.visible === false && "opacity-50"
+    )}>
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">Image</Label>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onRemove}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <TrashIcon className="size-4" />
-        </Button>
+        <ItemActions 
+          visible={item.visible} 
+          onRemove={onRemove} 
+          onDuplicate={onDuplicate} 
+          onToggleVisibility={onToggleVisibility} 
+        />
       </div>
       
       <div className="space-y-3">
@@ -378,20 +432,22 @@ function ImageItemEditor({ item, onUpdate, onRemove }: ItemEditorProps) {
   );
 }
 
-function SeparatorItemEditor({ onRemove }: { onRemove: (e: React.MouseEvent) => void }) {
+function SeparatorItemEditor({ item, onRemove, onDuplicate, onToggleVisibility }: ItemEditorProps) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border bg-card item-container">
+    <div className={cn(
+      "flex items-center justify-between p-3 rounded-lg border bg-card item-container transition-opacity",
+      item.visible === false && "opacity-50"
+    )}>
       <div className="flex-1">
         <div className="h-px bg-border w-full"></div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={onRemove}
-        className="text-muted-foreground hover:text-destructive ml-3"
-      >
-        <TrashIcon className="size-4" />
-      </Button>
+      <ItemActions 
+        visible={item.visible} 
+        onRemove={onRemove} 
+        onDuplicate={onDuplicate} 
+        onToggleVisibility={onToggleVisibility} 
+        className="ml-3"
+      />
     </div>
   );
 }
@@ -523,6 +579,8 @@ export function SectionEditor({ section }: SectionEditorProps) {
           item={item}
           onUpdate={(data) => handleUpdateItem(item.id, data)}
           onRemove={(e) => handleRemoveItem(item.id, e)}
+          onDuplicate={() => useResumeStore.getState().duplicateItem(section.id, item.id)}
+          onToggleVisibility={() => handleUpdateItem(item.id, { visible: !item.visible })}
         />
       ))}
       

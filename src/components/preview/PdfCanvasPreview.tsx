@@ -17,14 +17,16 @@ interface PdfCanvasPreviewProps {
   resume: Resume;
   translations: PdfTranslations;
   templateName?: string;
+  zoom?: number;
 }
 
 export function PdfCanvasPreview({ 
   resume, 
   translations,
-  templateName = "modern" 
+  templateName = "modern",
+  zoom = 1 
 }: PdfCanvasPreviewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -92,9 +94,8 @@ export function PdfCanvasPreview({
     };
   }, [generatePdfBlob]);
 
-  // Render PDF page to canvas using double buffering
   const renderPage = useCallback(async () => {
-    if (!pdfDoc || !canvasRef.current || !containerRef.current) return;
+    if (!pdfDoc || !canvasRef.current || !wrapperRef.current) return;
 
     // Cancel any ongoing render
     if (renderTaskRef.current) {
@@ -104,10 +105,9 @@ export function PdfCanvasPreview({
     try {
       const page = await pdfDoc.getPage(1);
       const visibleCanvas = canvasRef.current;
-      const container = containerRef.current;
-
-      // Get container width for responsive scaling
-      const containerWidth = container.clientWidth;
+      
+      // Get container width from the rigidly styled outer wrapper
+      const containerWidth = wrapperRef.current.clientWidth;
       
       // Get original page dimensions
       const viewport = page.getViewport({ scale: 1 });
@@ -115,7 +115,8 @@ export function PdfCanvasPreview({
       // Calculate scale to fit container width with padding
       const padding = 32; // 16px on each side
       const availableWidth = containerWidth - padding;
-      const scale = availableWidth / viewport.width;
+      const baseScale = availableWidth / viewport.width;
+      const scale = baseScale * zoom;
       
       // Apply scale
       const scaledViewport = page.getViewport({ scale });
@@ -158,7 +159,7 @@ export function PdfCanvasPreview({
       }
       console.error("Error rendering PDF page:", err);
     }
-  }, [pdfDoc]);
+  }, [pdfDoc, zoom]);
 
   // Re-render on pdfDoc change
   useEffect(() => {
@@ -169,13 +170,14 @@ export function PdfCanvasPreview({
 
   // Re-render on container resize - debounced to prevent blinking
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!wrapperRef.current) return;
 
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let lastWidth = containerRef.current.clientWidth;
+    let lastWidth = wrapperRef.current.clientWidth;
 
     const resizeObserver = new ResizeObserver((entries) => {
       const newWidth = entries[0]?.contentRect.width;
+      if (newWidth === undefined) return;
       
       // Only re-render if width changed by more than 5px (prevents scrollbar flicker)
       if (Math.abs(newWidth - lastWidth) < 5) return;
@@ -189,7 +191,7 @@ export function PdfCanvasPreview({
       }, 50);
     });
 
-    resizeObserver.observe(containerRef.current);
+    resizeObserver.observe(wrapperRef.current);
 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
@@ -218,31 +220,30 @@ export function PdfCanvasPreview({
   }
 
   return (
-    <ScrollArea className="h-full w-full">
-      <div 
-        ref={containerRef} 
-        className="w-full flex flex-col items-center"
-        style={{
-          minHeight: '100%',
-          backgroundColor: 'hsl(var(--muted) / 0.5)',
-          backgroundImage: 'radial-gradient(circle, hsl(var(--muted-foreground) / 0.1) 1px, transparent 1px)',
-          backgroundSize: '12px 12px',
-        }}
-      >
-        {isInitialLoad && (
-          <div className="flex items-center justify-center py-8">
-            <p className="text-muted-foreground">Generating preview...</p>
-          </div>
-        )}
-        <canvas 
-          ref={canvasRef} 
-          className="my-4 shadow-lg"
-          style={{ 
-            display: isInitialLoad ? 'none' : 'block',
-            maxWidth: '100%',
+    <div className="absolute inset-0 flex flex-col" ref={wrapperRef}>
+      <ScrollArea className="flex-1 w-full">
+        <div 
+          className="min-h-full min-w-full w-max flex justify-center items-start p-4"
+          style={{
+            backgroundColor: 'hsl(var(--muted) / 0.5)',
+            backgroundImage: 'radial-gradient(circle, hsl(var(--muted-foreground) / 0.1) 1px, transparent 1px)',
+            backgroundSize: '12px 12px',
           }}
-        />
-      </div>
-    </ScrollArea>
+        >
+          {isInitialLoad && (
+            <div className="flex items-center justify-center py-8 absolute inset-0">
+              <p className="text-muted-foreground bg-background/80 px-4 py-2 rounded-full shadow-sm backdrop-blur-sm">Generating preview...</p>
+            </div>
+          )}
+          <canvas 
+            ref={canvasRef} 
+            className="shadow-lg bg-card"
+            style={{ 
+              display: isInitialLoad ? 'none' : 'block',
+            }}
+          />
+        </div>
+      </ScrollArea>
+    </div>
   );
 }

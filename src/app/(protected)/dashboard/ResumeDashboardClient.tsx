@@ -286,7 +286,6 @@ export function ResumeDashboardClient({
         selectedResumes={selectedResumes}
         setSelectedResumes={setSelectedResumes}
         setIsSelectionMode={setIsSelectionMode}
-        resumes={filteredAndSortedResumes}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text } from '@react-pdf/renderer';
 import type { Resume, SectionContent, Item } from '@/types/resume';
 import { ColorScheme, BasePdfStyles, basePdfStyles } from './PdfStyles';
 import { PdfTranslations, renderPdfItem } from './ItemRenderers';
@@ -20,6 +20,7 @@ const renderSectionContent = (
   translations: PdfTranslations
 ) => {
   const { layout, columns = 1, items } = content;
+  const visibleItems = items.filter((i: Item) => i.visible !== false);
   
   // Helper for applying styles with overrides
   const getStyle = (key: keyof BasePdfStyles, extra?: Style): Style[] => {
@@ -33,7 +34,7 @@ const renderSectionContent = (
   if (layout === 'grid') {
     return (
       <View style={getStyle('grid')}>
-        {items.map((item: Item) => (
+        {visibleItems.map((item: Item) => (
           <View 
             key={item.id} 
             style={[
@@ -55,7 +56,7 @@ const renderSectionContent = (
   if (layout === 'inline') {
     return (
       <View style={getStyle('inline')}>
-        {items.map((item: Item) => (
+        {visibleItems.map((item: Item) => (
           <View key={item.id}>
             {renderPdfItem(item, baseStyles, colors, undefined, overrideStyles, translations)}
           </View>
@@ -67,7 +68,7 @@ const renderSectionContent = (
   // Default list layout
   return (
     <View>
-      {items.map((item: Item) => (
+      {visibleItems.map((item: Item) => (
         <View key={item.id} style={getStyle('listItem')}>
           {renderPdfItem(item, baseStyles, colors, undefined, overrideStyles, translations)}
         </View>
@@ -119,7 +120,7 @@ export const PdfRenderer = ({
         </View>
 
         {/* Sections */}
-        {resume.sections.map((section) => (
+        {resume.sections.filter(s => s.visible !== false).map((section) => (
           <View key={section.id} style={s('section')}>
             <Text style={s('sectionTitle', { color: colors.accents[0] || colors.text, borderBottomColor: colors.accents[0] || colors.text })}>
               {section.title.toUpperCase()}
