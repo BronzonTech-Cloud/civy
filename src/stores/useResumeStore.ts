@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid'; 
-import { Resume, Section, Item, PersonalInfo, ItemType, SectionContent } from '@/types/resume';
+import { Resume, Section, Item, PersonalInfo, ItemType } from '@/types/resume';
 import { RESUME_LIMITS } from '@/constants/limits';
 
 // --- Default Templates ---
-// Used when creating new sections. 
+// Used when creating new sections.
 // Note: 'content.id' is a placeholder here; it gets replaced with a real UUID on creation.
 export const SECTION_TEMPLATES: Record<string, Partial<Section>> = {
   experience: { 
@@ -51,6 +51,7 @@ interface ResumeStore {
   removeItem: (sectionId: string, itemId: string) => void;
   updateItem: (sectionId: string, itemId: string, data: Partial<Item>) => void;
   reorderItems: (sectionId: string, activeId: string, overId: string) => void;
+  duplicateItem: (sectionId: string, itemId: string) => void;
 }
 
 // --- Initial State ---
@@ -327,4 +328,49 @@ export const useResumeStore = create<ResumeStore>((set) => ({
         }),
       },
     })),
+
+  duplicateItem: (sectionId, itemId) =>
+    set((state) => {
+      // Find the store and section
+      const section = state.resume.sections.find((s) => s.id === sectionId);
+      if (!section) return {};
+
+      const itemIndex = section.content.items.findIndex((i) => i.id === itemId);
+      if (itemIndex === -1) return {};
+
+      const sourceItem = section.content.items[itemIndex];
+
+      // Check limits
+      if (section.content.items.length >= RESUME_LIMITS.MAX_ITEMS_PER_SECTION) {
+        console.warn(`Cannot duplicate item: maximum ${RESUME_LIMITS.MAX_ITEMS_PER_SECTION} items per section reached`);
+        return {};
+      }
+
+      // Create a deep copy and assign a new ID
+      const newItem = {
+        ...JSON.parse(JSON.stringify(sourceItem)),
+        id: uuidv4(),
+      };
+
+      return {
+        resume: {
+          ...state.resume,
+          sections: state.resume.sections.map((sec) => {
+            if (sec.id !== sectionId) return sec;
+
+            const newItems = [...sec.content.items];
+            // Insert after the source item
+            newItems.splice(itemIndex + 1, 0, newItem);
+
+            return {
+              ...sec,
+              content: {
+                ...sec.content,
+                items: newItems
+              }
+            };
+          }),
+        },
+      };
+    }),
 }));

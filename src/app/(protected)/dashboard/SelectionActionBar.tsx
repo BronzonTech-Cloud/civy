@@ -2,127 +2,117 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
 import { Copy, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toastManager } from "@/components/ui/toast";
-import { bulkDeleteResumes, bulkDuplicateResumes, type ResumeListItem } from "@/lib/resumes/actions";
+import { bulkDuplicateResumes, deleteResume } from "@/lib/resumes/actions";
+import { useTranslations } from "next-intl";
 
-type SelectionActionBarProps = {
+interface SelectionActionBarProps {
   selectedResumes: Set<string>;
   setSelectedResumes: (selected: Set<string>) => void;
-  setIsSelectionMode: (mode: boolean) => void;
-  resumes: ResumeListItem[];
-};
+  setIsSelectionMode: (isSelectionMode: boolean) => void;
+}
 
 export function SelectionActionBar({
   selectedResumes,
   setSelectedResumes,
   setIsSelectionMode,
-  resumes,
 }: SelectionActionBarProps) {
-  const t = useTranslations("dashboard");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const t = useTranslations("dashboard");
 
   if (selectedResumes.size === 0) return null;
 
-  const handleBulkDelete = () => {
-    startTransition(async () => {
-      const result = await bulkDeleteResumes(Array.from(selectedResumes));
-      if (result.error) {
-        toastManager.add({ type: "error", title: result.error });
-      } else {
-        toastManager.add({
-          type: "success",
-          title: t("bulkDeleteSuccess", { count: result.count ?? 0 }) || `Deleted ${result.count} resumes.`,
-        });
-        setIsSelectionMode(false);
-        setSelectedResumes(new Set());
-        router.refresh();
-      }
-    });
+  const handleClearSelection = () => {
+    setSelectedResumes(new Set());
+    setIsSelectionMode(false);
   };
 
   const handleBulkDuplicate = () => {
     startTransition(async () => {
-      const result = await bulkDuplicateResumes(Array.from(selectedResumes));
-      if (result.error) {
-        toastManager.add({ type: "error", title: result.error });
-      } else {
+      try {
+        const ids = Array.from(selectedResumes);
+        await bulkDuplicateResumes(ids);
+        
         toastManager.add({
           type: "success",
-          title: t("bulkDuplicateSuccess", { count: result.count ?? 0 }) || `Duplicated ${result.count} resumes.`,
+          title: t("bulkDuplicatedSuccess", { count: ids.length }),
         });
-        setIsSelectionMode(false);
-        setSelectedResumes(new Set());
+        
+        handleClearSelection();
         router.refresh();
+      } catch {
+        toastManager.add({
+          type: "error",
+          title: "Error duplicating resumes",
+        });
       }
     });
   };
 
-  const selectAll = () => {
-    if (selectedResumes.size === resumes.length) {
-      setSelectedResumes(new Set());
-    } else {
-      setSelectedResumes(new Set(resumes.map((r) => r.id)));
-    }
+  const handleBulkDelete = () => {
+    startTransition(async () => {
+      try {
+        const ids = Array.from(selectedResumes);
+        // Loop through and delete sequentially/parallel
+        await Promise.all(ids.map(id => deleteResume(id)));
+        
+        toastManager.add({
+          type: "success",
+          title: t("bulkDeletedSuccess", { count: ids.length }),
+        });
+        
+        handleClearSelection();
+        router.refresh();
+      } catch {
+        toastManager.add({
+          type: "error",
+          title: "Error deleting resumes",
+        });
+      }
+    });
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background border shadow-lg rounded-full px-4 py-3 flex items-center gap-4 animate-in slide-in-from-bottom-5">
-      <span className="text-sm font-medium px-2 shrink-0">
-        {t("itemsSelected", { count: selectedResumes.size })}
-      </span>
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-4 py-3 bg-card border shadow-xl rounded-full animate-in slide-in-from-bottom-5">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium whitespace-nowrap px-2">
+          {t("itemsSelected", { count: selectedResumes.size })}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleClearSelection}
+          className="rounded-full h-6 w-6"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
       
-      <div className="w-px h-6 bg-border mx-1" />
+      <div className="h-4 w-px bg-border" />
       
-      <Button
-        size="sm"
-        variant="ghost"
-        className="rounded-full"
-        onClick={selectAll}
-        disabled={isPending}
-      >
-        {selectedResumes.size === resumes.length ? t("deselectAll") || "Deselect All" : t("selectAll") || "Select All"}
-      </Button>
-
-      <Button
-        size="sm"
-        variant="secondary"
-        className="rounded-full gap-2"
-        onClick={handleBulkDuplicate}
-        disabled={isPending}
-      >
-        <Copy className="size-4" />
-        <span className="hidden sm:inline">{t("bulkDuplicate") || "Duplicate"}</span>
-      </Button>
-
-      <Button
-        size="sm"
-        variant="destructive"
-        className="rounded-full gap-2"
-        onClick={handleBulkDelete}
-        disabled={isPending}
-      >
-        <Trash2 className="size-4" />
-        <span className="hidden sm:inline">{t("bulkDelete") || "Delete"}</span>
-      </Button>
-
-      <div className="w-px h-6 bg-border mx-1" />
-
-      <Button
-        size="icon"
-        variant="ghost"
-        className="rounded-full size-8 shrink-0"
-        onClick={() => {
-          setIsSelectionMode(false);
-          setSelectedResumes(new Set());
-        }}
-        disabled={isPending}
-      >
-        <X className="size-4" />
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleBulkDuplicate}
+          disabled={isPending}
+        >
+          <Copy className="h-4 w-4 mr-2" />
+          {t("bulkDuplicate")}
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleBulkDelete}
+          disabled={isPending}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          {t("bulkDelete")}
+        </Button>
+      </div>
     </div>
   );
 }

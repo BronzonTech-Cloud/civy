@@ -5,11 +5,12 @@ import { Section } from "@/types/resume";
 import { RESUME_LIMITS } from "@/constants/limits";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useTranslations } from "next-intl";
-import { Card, CardHeader, CardContent, CardAction } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SectionEditor } from "@/components/editor/SectionEditor";
-import { TrashIcon, GripVertical } from "lucide-react";
+import { TrashIcon, GripVertical, EyeIcon, EyeOffIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { useState } from "react";
 import { DndContext, DragEndEvent, PointerSensor, KeyboardSensor, useSensor, useSensors, type DraggableAttributes } from '@dnd-kit/core';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { SortableContext, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -38,11 +39,21 @@ function DragHandle({ attributes, listeners }: DragHandleProps) {
 
 interface SortableSectionCardProps {
   section: Section;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
   onUpdateTitle: (sectionId: string, title: string) => void;
+  onToggleVisibility: (sectionId: string) => void;
   onRemove: (sectionId: string, e: React.MouseEvent) => void;
 }
 
-function SortableSectionCard({ section, onUpdateTitle, onRemove }: SortableSectionCardProps) {
+function SortableSectionCard({ 
+  section, 
+  isExpanded, 
+  onToggleExpand, 
+  onUpdateTitle, 
+  onToggleVisibility, 
+  onRemove 
+}: SortableSectionCardProps) {
   const {
     attributes,
     listeners,
@@ -68,7 +79,7 @@ function SortableSectionCard({ section, onUpdateTitle, onRemove }: SortableSecti
         isDragging && "shadow-lg"
       )}
     >
-      <Card>
+      <Card className={cn(section.visible === false && "opacity-60")}>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
             <DragHandle attributes={attributes} listeners={listeners} />
@@ -76,23 +87,45 @@ function SortableSectionCard({ section, onUpdateTitle, onRemove }: SortableSecti
               value={section.title}
               onChange={(e) => onUpdateTitle(section.id, e.target.value)}
               className="text-base font-semibold border-none bg-transparent px-0 focus-visible:ring-0"
+              placeholder="Untitled Section"
             />
             <div className="flex-1" />
-            <CardAction>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => onToggleVisibility(section.id)}
+                className="text-muted-foreground hover:text-primary"
+                title={section.visible === false ? "Show Section" : "Hide Section"}
+              >
+                {section.visible === false ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+              </Button>
               <Button
                 variant="ghost"
                 size="icon-sm"
                 onClick={(e) => onRemove(section.id, e)}
                 className="text-muted-foreground hover:text-destructive"
+                title="Remove Section"
               >
                 <TrashIcon className="size-4" />
               </Button>
-            </CardAction>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onToggleExpand}
+                className="text-muted-foreground hover:text-foreground"
+                title={isExpanded ? "Collapse" : "Expand"}
+              >
+                {isExpanded ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}
+              </Button>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <SectionEditor section={section} />
-        </CardContent>
+        {isExpanded && (
+          <CardContent className="p-0 border-t">
+            <SectionEditor section={section} />
+          </CardContent>
+        )}
       </Card>
     </div>
   );
@@ -106,6 +139,18 @@ export function SectionManager() {
   const removeSection = useResumeStore((state) => state.removeSection);
   const updateSection = useResumeStore((state) => state.updateSection);
   const reorderSections = useResumeStore((state) => state.reorderSections);
+
+  // Expanded state for sections
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(sections.map(s => s.id)));
+
+  const toggleExpand = (id: string) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const sectionCount = sections.length;
 
@@ -163,6 +208,13 @@ export function SectionManager() {
 
   const handleTitleChange = (sectionId: string, newTitle: string) => {
     updateSection(sectionId, { title: newTitle });
+  };
+
+  const handleVisibilityToggle = (sectionId: string) => {
+    const section = sections.find(s => s.id === sectionId);
+    if (section) {
+      updateSection(sectionId, { visible: section.visible === false ? true : false });
+    }
   };
 
   const handleRemoveSection = (sectionId: string, e: React.MouseEvent) => {
@@ -241,7 +293,10 @@ export function SectionManager() {
             <SortableSectionCard
               key={section.id}
               section={section}
+              isExpanded={expandedSections.has(section.id)}
+              onToggleExpand={() => toggleExpand(section.id)}
               onUpdateTitle={handleTitleChange}
+              onToggleVisibility={handleVisibilityToggle}
               onRemove={handleRemoveSection}
             />
           ))}
