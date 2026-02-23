@@ -47,7 +47,7 @@ export function PersonalInfoForm() {
             id="fullName"
             value={personal.fullName}
             onChange={handleFullNameChange}
-            placeholder="John Doe"
+            placeholder={t("placeholders.fullName")}
             maxLength={RESUME_LIMITS.MAX_FULL_NAME}
           />
           <div className={cn(
@@ -64,7 +64,7 @@ export function PersonalInfoForm() {
             id="jobTitle"
             value={personal.jobTitle ?? ""}
             onChange={handleJobTitleChange}
-            placeholder="Software Engineer"
+            placeholder={t("placeholders.jobTitle")}
             maxLength={RESUME_LIMITS.MAX_JOB_TITLE}
           />
           <div className={cn(

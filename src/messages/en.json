@@ -60,6 +60,14 @@
       "summary": "Professional Summary",
       "custom": "Custom Section"
     },
+    "placeholders": {
+      "fullName": "John Doe",
+      "jobTitle": "Software Engineer",
+      "untitledSection": "Untitled Section",
+      "linkUrl": "https://...",
+      "skillLabel": "e.g., JavaScript",
+      "templateName": "Template Name"
+    },
     "preview": {
       "title": "Live Preview",
       "loading": "Loading preview...",
@@ -253,7 +261,6 @@
     "renewsOn": "Renews on",
     "cancelSubscription": "Cancel Subscription",
     "cancelConfirm": "Are you sure? This cannot be undone.",
-    "confirmCancel": "Yes, Cancel",
     "canceling": "Canceling...",
     "subscriptionCanceled": "Subscription canceled",
     "upgradeToPro": "Upgrade to Pro",

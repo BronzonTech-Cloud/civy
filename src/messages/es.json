@@ -60,6 +60,14 @@
       "summary": "Resumen Profesional",
       "custom": "Sección Personalizada"
     },
+    "placeholders": {
+      "fullName": "Juan Pérez",
+      "jobTitle": "Ingeniero de Software",
+      "untitledSection": "Sección sin título",
+      "linkUrl": "https://...",
+      "skillLabel": "ej. JavaScript",
+      "templateName": "Nombre de la plantilla"
+    },
     "preview": {
       "title": "Vista Previa",
       "loading": "Cargando...",
